@@ -10,14 +10,14 @@ import argparse
 def stft(sig, frameSize, overlapFac=0.5):
     hopSize = int(frameSize - np.floor(overlapFac * frameSize))
 
-    samples = np.append(np.zeros(np.floor(frameSize/2.0)), sig)
+    samples = np.append(np.zeros(int(frameSize/2.0)), sig)
+    cols = np.ceil((len(samples) - frameSize) / float(hopSize)) + 1
     samples = np.append(samples, np.zeros(frameSize))
 
-    cols = np.ceil((len(samples) - frameSize) / float(hopSize)) + 1
+    frames = stride_tricks.as_strided(samples,shape=(cols, frameSize),strides=(samples.strides[0]*hopSize, samples.strides[0])).copy()
 
-    frames = stride_tricks.as_strided(samples,(cols, frameSize),(samples.strides[0]*hopSize, samples.strides[0])).copy()
     frames *= np.hanning(frameSize)
-
+    # np.multiply(frames, frameSize, out=frames, casting="unsafe")
     return np.fft.rfft(frames)
 
 def logSpectrum(spec, sr=44100):
@@ -61,7 +61,6 @@ parser.add_argument('--dataset', type=str, default="small", help='Choose small o
 parser.add_argument('--ratio', type=float, default=0.8, help='Training and validation set ratio')
 
 args = parser.parse_args()
-print args.ratio
 
 if args.dataset == "small":
     dataPath = "../Data/small/"
