@@ -17,11 +17,11 @@ def stft(sig, frameSize, overlapFac=0.5):
     frames = stride_tricks.as_strided(samples,shape=(cols, frameSize),strides=(samples.strides[0]*hopSize, samples.strides[0])).copy()
 
     frames *= np.hanning(frameSize)
-    # np.multiply(frames, frameSize, out=frames, casting="unsafe")
+
     return np.fft.rfft(frames)
 
 def logSpectrum(spec, sr=44100):
-    spec = spec[:, 0:256]
+    # spec = spec[:, 0:120]
     timebins, freqbins = spec.shape
 
     scale = np.linspace(0, 1, freqbins)
@@ -52,37 +52,34 @@ def plotSpectrogram(audiopath, name, binsize=2**10):
     ims = 20.*np.log10(np.abs(sshow)/10e-6) # amplitude to decibel
 
     ims = np.transpose(ims)
-    ims = ims[0:256,0:856]
-
-    image = Image.fromarray(ims).convert('L').save(name)
+    image = Image.fromarray(ims[0:256,0:800]).convert('L').save(name)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default="small", help='Choose small or large dataset')
-parser.add_argument('--ratio', type=float, default=0.8, help='Training and validation set ratio')
+parser.add_argument('--ratio', type=float, default=0.8, help='Training and test set ratio')
 
 args = parser.parse_args()
-
 if args.dataset == "small":
-    dataPath = "../Data/small/"
+    datapath = "../Data/small/"
 elif args.dataset == "large":
-    dataPath = "../Data/small/"
+    datapath = "../Data/large/"
 else:
     raise Exception('Dataset can only be small or large!')
 
-os.system("mkdir " + dataPath + "trainingData/spectrograms")
+os.system("mkdir " + datapath + "trainingData/spectrograms")
 
-csvfile = open(dataPath + "trainingData.csv", 'r').readlines()
-trainSet = open(dataPath + "trainEqual.csv", 'w')
-valSet = open(dataPath + "valEqual.csv", 'w')
+csvfile = open(datapath + "trainingData.csv", 'r').readlines()
+trainSet = open(datapath + "trainset.csv", 'w')
+testSet = open(datapath + "testset.csv", 'w')
 
 langs = dict()
 langCount = 0
 
 for line in csvfile:
-    # Data augmention may be applied here.
+    # TODO: Data augmentation may be applied to get more data.
     filepath,lang = line.split(",")
-    os.system('mpg123 -w tmp.wav ' + dataPath + 'trainingData/' + filepath)
-    plotSpectrogram('tmp.wav', name = dataPath + "trainingData/spectrograms/" + filepath[:-4] + ".png")
+    os.system('mpg123 -w tmp.wav ' + datapath + 'trainingData/' + filepath)
+    plotSpectrogram('tmp.wav', name = datapath + "trainingData/spectrograms/" + filepath[:-4] + ".png")
     os.remove('tmp.wav')
     lang = lang.strip()
     if lang not in langs:
@@ -93,9 +90,8 @@ count = [0] * langCount
 for line in csvfile:
     filepath, language = line.split(",")
     lang = langs[language.strip()]
-
-    if (count[lang] < (len(csvfile)/len(langs))*0.8):
+    if (count[lang] < (len(csvfile)/len(langs))*args.ratio):
         trainSet.write(filepath[:-4] + ',' + str(lang) + '\n')
     else:
-        valSet.write(filepath[:-4] + ',' + str(lang) + '\n')
+        testSet.write(filepath[:-4] + ',' + str(lang) + '\n')
     count[lang] += 1
