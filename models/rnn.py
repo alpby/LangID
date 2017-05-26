@@ -17,14 +17,14 @@ class Model:
         self.dataclass = dataclass      # Number of languages to classify
         self.datapath = datapath        # Path to small or large dataset
 
-        self.spectrograms = theano.tensor.tensor3('spectrograms')       # Input tensor is three dimensional in RNN case
-        self.langs = theano.tensor.ivector('langs')                     # Output is a vector with "dataclass" dimension
+        self.spectrograms = theano.tensor.tensor3("spectrograms")       # Input tensor is three dimensional in RNN case
+        self.langs = theano.tensor.ivector("langs")                     # Output is a vector with "dataclass" dimension
 
         # NOTE: Inputs are different sized so I had to crop plots. They have size of (256,800), since high frequencies are not that important and training takes shorter.
         model = lasagne.layers.InputLayer((None, 800, 256), 2 * self.spectrograms - 1)  # InputLayer
-        model = lasagne.layers.GRULayer(model, self.units)                              # GRULayer
+        model = lasagne.layers.GRULayer(model, self.units)                              # GRU/LSTM
         model = lasagne.layers.BatchNormLayer(model)                                    # BatchNormalization Layer
-        model = lasagne.layers.GRULayer(model, self.units, only_return_final=True)      # GRULayer
+        model = lasagne.layers.GRULayer(model, self.units, only_return_final=True)      # GRU/LSTM
         model = lasagne.layers.BatchNormLayer(model)                                    # BatchNormalization Layer
 
         # NOTE: Below where the classification happens. Softmax classifier used to output the language with highest probability.
@@ -35,7 +35,7 @@ class Model:
 
         # NOTE: Cost function is the result of cross entropy function.
         self.cost = lasagne.objectives.categorical_crossentropy(self.prediction, self.langs).mean()
-        opts = lasagne.updates.adam(self.cost, self.weights, learning_rate=0.01)
+        opts = lasagne.updates.adam(self.cost, self.weights, learning_rate=0.001)
 
         # NOTE: The train and test sets are feeded into same network, no backpropagation for test set though.
         self.runTrain = theano.function([self.spectrograms,self.langs],[self.prediction,self.cost],updates=opts)
