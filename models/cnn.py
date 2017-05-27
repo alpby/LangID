@@ -35,7 +35,7 @@ class Model:
         model = lasagne.layers.InputLayer((None, 1, 256, 800), self.spectrograms)
         print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
 
-        model = convpool(model,16,(7,7),1,(3,3),2,2,example)
+        model = convpool(model,16,(7,7),1,(3,3),2,3,example)
         model = convpool(model,32,(5,5),1,(3,3),2,2,example)
         model = convpool(model,64,(3,3),1,(3,3),2,1,example)
         model = convpool(model,128,(3,3),1,(3,3),2,1,example)

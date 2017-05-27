@@ -37,10 +37,10 @@ class Model:
         model = lasagne.layers.InputLayer((None, 1, 256, 800), self.spectrograms)
         print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
 
-        model = convpool(model,32,(7,7),1,(3,3),2,2,example)
-        model = convpool(model,64,(5,5),1,(3,3),2,2,example)
-        model = convpool(model,128,(3,3),1,(3,3),2,1,example)
-        model = convpool(model,256,(3,3),1,(3,3),2,1,example)
+        model = convpool(model,16,(7,7),1,(3,3),2,2,example)
+        model = convpool(model,32,(5,5),1,(3,3),2,2,example)
+        model = convpool(model,32,(3,3),1,(3,3),2,1,example)
+        model = convpool(model,32,(3,3),1,(3,3),2,1,example)
 
         self.weights = lasagne.layers.get_all_params(model, trainable=True)
 
@@ -50,7 +50,7 @@ class Model:
         output = output.transpose((0, 3, 1, 2))
         output = output.flatten(ndim=3)
 
-        model = lasagne.layers.InputLayer((None, 64, 3584), output)
+        model = lasagne.layers.InputLayer((None, 32, 448), output)
         print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
 
         model = lasagne.layers.GRULayer(model, self.units, only_return_final=True)
@@ -67,7 +67,7 @@ class Model:
 
         # NOTE: Cost function is the result of cross entropy function.
         self.loss = lasagne.objectives.categorical_crossentropy(self.prediction, self.langs).mean()
-        opts = lasagne.updates.adam(self.loss, self.weights, learning_rate=0.001)
+        opts = lasagne.updates.adam(self.loss, self.weights, learning_rate=0.003)
 
         # NOTE: The train and test sets are feeded into same network, no backpropagation for test set though.
         self.runTrain = theano.function([self.spectrograms,self.langs],[self.prediction,self.loss],updates=opts)
