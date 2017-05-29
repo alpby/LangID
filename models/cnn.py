@@ -11,11 +11,9 @@ class Model:
         # Try with different sized filters
 
         # NOTE: I created function below to apply convolution, max-pooling and batch normalization altogether.
-        def convpool(model,filters,filterSize,stride,pooling,poolingStride,padding,example):
+        def convpool(model,filters,filterSize,stride,pooling,poolingStride,padding):
             model = lasagne.layers.Conv2DLayer(model,filters,filterSize,stride)
-            print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
             model = lasagne.layers.MaxPool2DLayer(model,pooling,poolingStride,padding)
-            print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
             model = lasagne.layers.BatchNormLayer(model)
             return model
 
@@ -30,32 +28,28 @@ class Model:
 
         # NOTE: Inputs are different sized so I had to crop plots. They have size of (256,800), since high frequencies are not that important and training takes shorter.
         # You can add or remove convpool layer below.
-        example = np.random.uniform(size=(self.batchsize, 1, 256, 800), low=0.0, high=1.0).astype(np.float32) #########
 
         model = lasagne.layers.InputLayer((None, 1, 256, 800), self.spectrograms)
-        print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
 
-        model = convpool(model,16,(7,7),1,(3,3),2,3,example)
-        model = convpool(model,32,(5,5),1,(3,3),2,2,example)
-        model = convpool(model,64,(3,3),1,(3,3),2,1,example)
-        model = convpool(model,128,(3,3),1,(3,3),2,1,example)
-        model = convpool(model,256,(3,3),1,(3,3),2,1,example)
+        model = convpool(model,16,(7,7),1,3,2,1)
+        model = convpool(model,32,(5,5),1,3,2,1)
+        model = convpool(model,64,(3,3),1,3,2,1)
+        model = convpool(model,128,(3,3),1,3,2,1)
+        model = convpool(model,256,(3,3),1,3,2,1)
 
         model = lasagne.layers.DenseLayer(model, 1024)
-        print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
 
         model = lasagne.layers.BatchNormLayer(model)
 
         # NOTE: Below where the classification happens. Softmax classifier used to output the language with highest probability.
         model = lasagne.layers.DenseLayer(model, self.dataclass, nonlinearity=lasagne.nonlinearities.softmax)
-        print lasagne.layers.get_output(model).eval({self.spectrograms:example}).shape
 
         self.weights = lasagne.layers.get_all_params(model, trainable=True)
         self.prediction = lasagne.layers.get_output(model)
 
         # NOTE: Cost function is the result of cross entropy function.
         self.cost = lasagne.objectives.categorical_crossentropy(self.prediction, self.langs).mean()
-        opts = lasagne.updates.adam(self.cost, self.weights, learning_rate=0.001)
+        opts = lasagne.updates.adam(self.cost, self.weights, learning_rate=0.003)
 
         # NOTE: The train and test sets are feeded into same network, no backpropagation for test set though.
         self.runTrain = theano.function([self.spectrograms,self.langs],[self.prediction,self.cost],updates=opts)

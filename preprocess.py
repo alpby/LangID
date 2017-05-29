@@ -29,7 +29,7 @@ def logSpectrum(spec):
     _, freqbins = spec.shape
     scale = range(freqbins)
     logspec = np.complex128(np.zeros(spec.shape))
-    
+
     for i in range(freqbins - 1):
         logspec[:,i] = np.sum(spec[:,scale[i]:scale[i + 1]], axis=1)
     logspec[:,freqbins - 1] = np.sum(spec[:,scale[freqbins - 1]:], axis=1)

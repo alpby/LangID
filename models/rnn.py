@@ -35,7 +35,7 @@ class Model:
 
         # NOTE: Cost function is the result of cross entropy function.
         self.cost = lasagne.objectives.categorical_crossentropy(self.prediction, self.langs).mean()
-        opts = lasagne.updates.adam(self.cost, self.weights, learning_rate=0.001)
+        opts = lasagne.updates.adam(self.cost, self.weights, learning_rate=0.003)
 
         # NOTE: The train and test sets are feeded into same network, no backpropagation for test set though.
         self.runTrain = theano.function([self.spectrograms,self.langs],[self.prediction,self.cost],updates=opts)
