@@ -22,16 +22,15 @@ parser.add_argument('--model', type=str, default="rnn", help='Choose cnn,rnn or 
 parser.add_argument('--epochs', type=int, default=100, help='Number of epochs')
 parser.add_argument('--batchsize', type=int, default=30, help='Number of images in one batch')
 parser.add_argument('--rnnunits', type=int, default=100, help='RNN hidden units')
+parser.add_argument('--langs', type=int, default=5, help='Number of classes to be used')
 
 args = parser.parse_args()
 
 # NOTE: Dataclass variable represents the number of different languages each dataset includes.
 if args.dataset == "small":
     datapath = "../Data/small/"
-    dataclass = 5
 elif args.dataset == "large":
     datapath = "../Data/large/"
-    dataclass = 176
 else:
     raise Exception('Dataset can only be small or large!')
 
@@ -41,7 +40,7 @@ tstdata = open(datapath + "testset.csv", "r").readlines()
 args_dict = dict(args._get_kwargs())
 args_dict['trndata'] = trndata
 args_dict['tstdata'] = tstdata
-args_dict['dataclass'] = dataclass
+args_dict['dataclass'] = args.langs
 args_dict['datapath'] = datapath
 
 models = importlib.import_module("models." + args.model)
@@ -75,8 +74,10 @@ def training(mode, trndatasize, tstdatasize, epoch):
         sys.stdout.flush()
     print ":----->\t%s accuracy: %f%%" % (mode, accuracy * 100.0 / batches / args.batchsize)
 
-    return cost / batches
+    return forwardRun["batchprediction"].argmax(axis=1), forwardRun["langs"], cost / batches
 
 for epoch in range(args.epochs):
     training('train', len(trndata), len(tstdata), epoch)
-    training('test', len(trndata), len(tstdata), epoch)
+    pred, ygold, _ = training('test', len(trndata), len(tstdata), epoch)
+print pred
+print ygold
