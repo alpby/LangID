@@ -10,7 +10,7 @@ class Model:
         # Apply dropout
         # Try with different sized filters
 
-        # NOTE: I created function below to apply convolution, max-pooling and batch normalization altogether.
+        # NOTE: I created function below to apply convolution, maxpooling and batch normalization altogether.
         def convpool(model,filters,filterSize,stride,pooling,poolingStride,padding):
             model = lasagne.layers.Conv2DLayer(model,filters,filterSize,stride)
             model = lasagne.layers.MaxPool2DLayer(model,pooling,poolingStride,padding)
@@ -28,7 +28,6 @@ class Model:
 
         # NOTE: Inputs are different sized so I had to crop plots. They have size of (256,800), since high frequencies are not that important and training takes shorter.
         # You can add or remove convpool layer below.
-
         model = lasagne.layers.InputLayer((None, 1, 256, 800), self.spectrograms)
 
         model = convpool(model,16,(7,7),1,3,2,1)

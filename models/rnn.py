@@ -22,7 +22,7 @@ class Model:
 
         # NOTE: Inputs are different sized so I had to crop plots. They have size of (256,800), since high frequencies are not that important and training takes shorter.
         model = lasagne.layers.InputLayer((None, 800, 256), 2 * self.spectrograms - 1)  # InputLayer
-        model = lasagne.layers.GRULayer(model, self.units)                              # GRU/LSTM
+        model = lasagne.layers.LSTMLayer(model, self.units)                             # GRU/LSTM
         model = lasagne.layers.BatchNormLayer(model)                                    # BatchNormalization Layer
         model = lasagne.layers.GRULayer(model, self.units, only_return_final=True)      # GRU/LSTM
         model = lasagne.layers.BatchNormLayer(model)                                    # BatchNormalization Layer

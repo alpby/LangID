@@ -28,7 +28,7 @@ class Model:
         self.spectrograms = theano.tensor.tensor4("spectrograms") # Input tensor is three dimensional in RNN case
         self.langs = theano.tensor.ivector("langs")               # Output is a vector with "dataclass" dimension
 
-        # NOTE: Inputs are different sized so I had to crop plots. They have size of (200,800), since high frequencies are not that important and training takes shorter.
+        # NOTE: Inputs are different sized so I had to crop plots. They have size of (256,800), since high frequencies are not that important and training takes shorter.
         # You can add or remove convpool layer below.
         model = lasagne.layers.InputLayer((None, 1, 256, 800), self.spectrograms)
 
@@ -40,7 +40,7 @@ class Model:
         self.weights = lasagne.layers.get_all_params(model, trainable=True)
 
         # NOTE: The output of CNN layers will be feeded into RNN here.
-        # TODO: There is no transpose and flatten functionality in theano. "dimshuffle" only works for transpose and expand_dims. Create this functionality.
+        # TODO: There is no transpose and flatten functionality in theano. "dimshuffle" only works for transpose and expand_dims.
         output = lasagne.layers.get_output(model)
         output = output.transpose((0, 3, 1, 2))
         output = output.flatten(ndim=3)

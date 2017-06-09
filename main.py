@@ -10,10 +10,9 @@ import os
 # NOTE: Datasets are explained in "preprocess.py"
 # There are three different models I applied for language identification problem.
 # Model "cnn" consists of only CNN layers with various number of filters.
-# Model "rnn" has two GRU/LSTM layers with changable number of RNN units.
+# Model "rnn" has two GRU/LSTM layers. Number of RNN units can be set manually.
 # Model "combine" has CNN layers and at the end there is GRU/LSTM layer.
-# If you use GPU, there is minibatching option to train the data. I wasn't able to use GPU for this project.
-# Hidden size of each RNN layer can be changed.
+# You can use minibatching by setting batchsize.
 
 parser = argparse.ArgumentParser()
 
@@ -48,12 +47,13 @@ model = models.Model(**args_dict)
 
 print "Model specifications and training parameters are the following:"
 print "Model structure is %s." % args.model
+print "Using %s dataset..." %args.dataset
+print "%d languages are to be classfied..." %args.langs
 print "There are %d training examples and %d validation examples." %(len(trndata), len(tstdata))
 print "Model will be trained for %d epochs." %args.epochs
 print "Batchsize is %d." % args.batchsize
 if args.model == "rnn" or args.model == "combine":
     print "Number of hidden RNN units is %d." % args.rnnunits
-print "Using %s dataset..." %args.dataset
 
 def training(mode, trndatasize, tstdatasize, epoch):
     cost = 0
@@ -76,8 +76,29 @@ def training(mode, trndatasize, tstdatasize, epoch):
 
     return forwardRun["batchprediction"].argmax(axis=1), forwardRun["langs"], cost / batches
 
+def recall(truepos,falseneg):
+    return truepos/float(truepos + falseneg)
+
+def precision(truepos,falsepos):
+    return truepos/float(truepos + falsepos)
+
 for epoch in range(args.epochs):
     training('train', len(trndata), len(tstdata), epoch)
     pred, ygold, _ = training('test', len(trndata), len(tstdata), epoch)
-print pred
-print ygold
+
+# NOTE: It is only working when whole test set is fed into model at once.
+if len(tstdata) == args.batchsize:
+    truepos = args.langs*[0]
+    falsepos = args.langs*[0]
+    falseneg = args.langs*[0]
+
+    for i in range(len(pred)):
+        if pred[i] == ygold[i]:
+            truepos[pred[i]] += 1
+        else:
+            falsepos[pred[i]] += 1
+            falseneg[ygold[i]] += 1
+
+    print ""
+    for i in range(args.langs):
+        print "For language number %d recall is %.2f and precision is %.2f" %(i + 1, 100*recall(truepos[i],falseneg[i]), 100*precision(truepos[i],falsepos[i]))
